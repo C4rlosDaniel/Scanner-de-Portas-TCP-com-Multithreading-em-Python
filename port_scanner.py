@@ -2,7 +2,7 @@ import socket
 import threading
 from queue import Queue
 
-# Defina o alvo aqui (ex: "192.168.0.10", "localhost", etc.)
+
 target = "***.*.*.*"
 queue = Queue()
 open_ports = []
