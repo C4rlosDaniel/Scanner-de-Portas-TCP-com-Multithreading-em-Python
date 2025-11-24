@@ -1,96 +1,100 @@
-🔍 Scanner de Portas TCP com Multithreading em Python
+# 🔍 Scanner de Portas TCP com Multithreading em Python
 
-Este repositório contém uma ferramenta de varredura (scan) de portas TCP desenvolvida em Python, projetada para oferecer alto desempenho através de multithreading e uso da estrutura thread-safe Queue.
+Este repositório contém uma ferramenta de varredura (scan) de portas TCP desenvolvida em Python, projetada para oferecer alto desempenho através de multithreading e uso da estrutura thread-safe **Queue**.  
 O objetivo é identificar portas abertas em um host alvo por meio de conexões TCP rápidas e concorrentes.
 
-⚙️ Como o Scanner Funciona
-1️⃣ Definição do alvo
+---
 
+## ⚙️ Como o Scanner Funciona
+
+### 1️⃣ Definição do alvo  
 O usuário informa um endereço IPv4 ou hostname para ser analisado.
 
-2️⃣ Geração da lista de portas
+### 2️⃣ Geração da lista de portas  
+Um intervalo de portas (por padrão **1–1023**) é armazenado em uma `Queue`, garantindo segurança e controle no acesso por múltiplas threads.
 
-Um intervalo de portas (por padrão 1–1023) é armazenado em uma Queue, garantindo segurança e controle no acesso por múltiplas threads.
+### 3️⃣ Criação das threads  
+O programa cria diversas threads, cada uma responsável por processar uma porta de forma simultânea, executando a função `worker()`.
 
-3️⃣ Criação das threads
+### 4️⃣ Tentativa de conexão  
+Cada worker utiliza a função `portscan()` para:
 
-O programa cria diversas threads, cada uma responsável por processar uma porta de forma simultânea, executando a função worker().
+- criar um socket TCP,  
+- definir timeout reduzido (0.3s),  
+- tentar conexão com a porta atual,  
+- registrar portas abertas caso a conexão seja bem-sucedida.
 
-4️⃣ Tentativa de conexão
+### 5️⃣ Sincronização  
+O programa aguarda todas as threads finalizarem (`join()`) para então exibir o resultado consolidado.
 
-Cada worker utiliza a função portscan() para:
+---
 
-criar um socket TCP,
+## 🧠 Por que utilizar Multithreading?
 
-definir timeout reduzido (0.3s),
+Scanners sequenciais sofrem com:
 
-tentar conexão com a porta atual,
+- tempo somado de múltiplos timeouts,  
+- latência natural da rede,  
+- processamento linear pouco eficiente.
 
-registrar portas abertas caso a conexão seja bem-sucedida.
+Com **multithreading**, o trabalho é distribuído entre várias rotinas simultâneas, permitindo testar **centenas de portas ao mesmo tempo**.  
+O resultado é uma varredura **muito mais rápida**, especialmente útil em redes de maior latência.
 
-5️⃣ Sincronização
+---
 
-O programa aguarda todas as threads finalizarem (join()) para então exibir o resultado consolidado.
+## 🧩 Principais Funções
 
-🧠 Por que utilizar Multithreading?
-
-Scanners tradicionais, sequenciais, sofrem com:
-
-tempo somado de múltiplos timeouts,
-
-latência natural da rede,
-
-processamento linear pouco eficiente.
-
-Com threads, o trabalho é distribuído entre diversas rotinas simultâneas, permitindo testar centenas de portas ao mesmo tempo. O resultado é uma varredura muito mais rápida, especialmente útil em redes de maior latência.
-
-🧩 Principais Funções
-portscan(port)
-
+### **portscan(port)**
 Responsável por:
 
-instanciar um socket TCP (socket.SOCK_STREAM);
+- instanciar um socket TCP (`socket.SOCK_STREAM`),  
+- aplicar timeout,  
+- tentar conexão,  
+- retornar **True** quando a porta está aberta.
 
-aplicar timeout;
+---
 
-tentar conexão;
+### **fill_queue(port_list)**
+Adiciona cada porta à fila compartilhada (`Queue`), consumida pelas threads worker.
 
-retornar True quando a porta está aberta.
+---
 
-fill_queue(port_list)
+### **worker()**
+Executado por cada thread, realizando:
 
-Adiciona todas as portas da lista à fila compartilhada (Queue), de onde serão consumidas pelas threads.
+- retirar uma porta da fila,  
+- chamar `portscan()`,  
+- registrar portas abertas em `open_ports`.
 
-worker()
+---
 
-Executado por cada thread. Faz o loop:
+### **Thread principal**
+Responsável por:
 
-retira uma porta da fila,
+- criar e iniciar as threads (`start()`),  
+- sincronizar todas (`join()`),  
+- imprimir o resultado final:
 
-chama portscan(),
-
-registra portas abertas em open_ports.
-
-Thread principal
-
-Controla:
-
-criação e inicialização das threads (start()),
-
-sincronização delas (join()),
-
-impressão do resultado final:
-
+```python
 print("Open ports:", open_ports)
+```
 
-🛡️ Aviso Importante
+---
 
-Este scanner deve ser utilizado somente para fins educacionais, testes pessoais ou auditoria em ambientes onde você possui permissão explícita.
-O uso indevido pode violar leis de segurança digital
+## 🛡️ Aviso Importante
 
-print("open ports are :", open_ports)
+Este scanner deve ser utilizado somente para:
 
-⚠️ Aviso Importante
+- fins educacionais,  
+- testes pessoais,  
+- auditoria em ambientes onde você possui permissão explícita.
 
-Este software deve ser utilizado exclusivamente para fins educacionais e em ambientes onde você possui permissão explícita para realizar testes de segurança.
-Realizar port scanning em sistemas de terceiros sem autorização pode violar leis e políticas de uso
+O uso indevido pode infringir leis de segurança digital.
+
+---
+
+## ⚠️ Aviso Legal
+
+Este software é **exclusivamente para fins educacionais** e deve ser executado apenas em sistemas onde você tem autorização explícita para realizar port scanning.  
+Varreduras não autorizadas podem violar leis e políticas de uso.
+
